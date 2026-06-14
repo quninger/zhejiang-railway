@@ -494,10 +494,13 @@
   // ============ 加载地图 ============
   let chart;
 
-  fetch('https://geo.datav.aliyun.com/areas_v3/bound/330000_full.json')
-    .then(res => res.json())
-    .then(zhejiangGeo => {
+  Promise.all([
+    fetch('https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json').then(r => r.json()),
+    fetch('https://geo.datav.aliyun.com/areas_v3/bound/330000_full.json').then(r => r.json())
+  ])
+    .then(([chinaGeo, zhejiangGeo]) => {
       chart = echarts.init(document.getElementById('mapChart'));
+      echarts.registerMap('china', chinaGeo);
       echarts.registerMap('zhejiang', zhejiangGeo);
 
       const colors = ['#4a90e2','#5b9ee8','#6dacee','#3d7ec5','#2b6cb0','#1a5a9e','#4a90e2','#e8a040','#5b9ee8'];
@@ -584,26 +587,45 @@
           extraCssText: 'border-radius:6px;box-shadow:0 4px 20px rgba(0,0,0,0.5);',
         },
         geo: {
-          map: 'zhejiang',
-          roam: true,              // ← 鼠标滚轮缩放 + 拖拽，以鼠标为中心
-          zoom: 1.15,
-          center: [120.5, 29.3],
-          scaleLimit: { min: 0.6, max: 6 },
+          map: 'china',
+          roam: true,
+          zoom: 1.1,
+          center: [113, 33],
+          scaleLimit: { min: 0.5, max: 10 },
+          // 全国省份统一暗色，浙江高亮
           itemStyle: {
-            areaColor: {
-              type: 'linear', x: 0, y: 0, x2: 1, y2: 1,
-              colorStops: [
-                { offset: 0, color: 'rgba(10, 30, 60, 0.9)' },
-                { offset: 0.5, color: 'rgba(15, 40, 80, 0.85)' },
-                { offset: 1, color: 'rgba(8, 25, 50, 0.9)' }
-              ]
-            },
-            borderColor: 'rgba(74, 144, 226, 0.6)',
-            borderWidth: 1.5,
-            shadowColor: 'rgba(74, 144, 226, 0.3)',
-            shadowBlur: 20,
-            shadowOffsetY: 5,
+            areaColor: 'rgba(8, 18, 36, 0.85)',
+            borderColor: 'rgba(40, 60, 90, 0.5)',
+            borderWidth: 0.8,
+            shadowColor: 'transparent',
+            shadowBlur: 0,
           },
+          regions: [{
+            name: '浙江省',
+            itemStyle: {
+              areaColor: {
+                type: 'linear', x: 0, y: 0, x2: 1, y2: 1,
+                colorStops: [
+                  { offset: 0, color: 'rgba(10, 30, 60, 0.95)' },
+                  { offset: 0.5, color: 'rgba(15, 40, 80, 0.9)' },
+                  { offset: 1, color: 'rgba(8, 25, 50, 0.95)' }
+                ]
+              },
+              borderColor: 'rgba(74, 144, 226, 0.7)',
+              borderWidth: 2,
+              shadowColor: 'rgba(74, 144, 226, 0.4)',
+              shadowBlur: 25,
+              shadowOffsetY: 3,
+            },
+            label: {
+              show: true,
+              color: '#4a90e2',
+              fontSize: 16,
+              fontWeight: 'bold',
+              textShadowColor: 'rgba(0,0,0,0.7)',
+              textShadowBlur: 6,
+            }
+          }],
           emphasis: { disabled: true },
           label: { show: false },
         },
@@ -632,10 +654,10 @@
       console.log('✅ 浙江省高铁路线大屏已就绪 — ' + Object.keys(stations).length + ' 个站点, ' + routes.length + ' 条线路, ' + cities.length + ' 个地市');
     })
     .catch(err => {
-      console.error('加载浙江地图失败:', err);
+      console.error('加载地图失败:', err);
       document.getElementById('mapChart').innerHTML =
         '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#e04040;font-size:18px;">' +
-        '⚠ 无法加载地图数据，请检查网络后刷新页面</div>';
+        '⚠ 无法加载中国/浙江地图数据，请检查网络后刷新页面</div>';
     });
 
   // ============ 路线查询 ============
@@ -726,7 +748,7 @@
     chart.dispatchAction({ type: 'restore' });
     // 备用：显式重置 center + zoom
     chart.setOption({
-      geo: { center: [120.5, 29.3], zoom: 1.15 }
+      geo: { center: [113, 33], zoom: 1.1 }
     });
   });
 
