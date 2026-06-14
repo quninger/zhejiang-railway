@@ -587,55 +587,43 @@
           extraCssText: 'border-radius:6px;box-shadow:0 4px 20px rgba(0,0,0,0.5);',
         },
         geo: {
-          map: 'china',
+          map: 'zhejiang',
           roam: true,
-          zoom: 12,
-          center: [120.5, 29.1],
-          scaleLimit: { min: 0.5, max: 20 },
-          // 全国省份统一暗色，浙江高亮
+          zoom: 1.25,
+          center: [120.5, 29.3],
+          scaleLimit: { min: 0.6, max: 8 },
           itemStyle: {
-            areaColor: 'rgba(8, 18, 36, 0.85)',
-            borderColor: 'rgba(40, 60, 90, 0.5)',
-            borderWidth: 0.8,
+            borderColor: 'rgba(74, 144, 226, 0.5)',
+            borderWidth: 1.2,
             shadowColor: 'transparent',
             shadowBlur: 0,
           },
-          regions: [{
-            name: '浙江省',
-            itemStyle: {
-              areaColor: {
-                type: 'linear', x: 0, y: 0, x2: 1, y2: 1,
-                colorStops: [
-                  { offset: 0, color: 'rgba(10, 30, 60, 0.95)' },
-                  { offset: 0.5, color: 'rgba(15, 40, 80, 0.9)' },
-                  { offset: 1, color: 'rgba(8, 25, 50, 0.95)' }
-                ]
-              },
-              borderColor: 'rgba(74, 144, 226, 0.7)',
-              borderWidth: 2,
-              shadowColor: 'rgba(74, 144, 226, 0.4)',
-              shadowBlur: 25,
-              shadowOffsetY: 3,
-            },
-            label: {
-              show: true,
-              color: '#4a90e2',
-              fontSize: 16,
-              fontWeight: 'bold',
-              textShadowColor: 'rgba(0,0,0,0.7)',
-              textShadowBlur: 6,
-            }
-          }],
+          regions: [
+            { name: '杭州市', itemStyle: { areaColor: 'rgba(12, 35, 68, 0.92)' } },
+            { name: '宁波市', itemStyle: { areaColor: 'rgba(10, 30, 60, 0.9)' } },
+            { name: '温州市', itemStyle: { areaColor: 'rgba(11, 33, 64, 0.91)' } },
+            { name: '嘉兴市', itemStyle: { areaColor: 'rgba(9, 28, 58, 0.89)' } },
+            { name: '湖州市', itemStyle: { areaColor: 'rgba(13, 36, 70, 0.93)' } },
+            { name: '绍兴市', itemStyle: { areaColor: 'rgba(10, 31, 62, 0.9)' } },
+            { name: '金华市', itemStyle: { areaColor: 'rgba(11, 32, 65, 0.91)' } },
+            { name: '衢州市', itemStyle: { areaColor: 'rgba(9, 29, 59, 0.89)' } },
+            { name: '舟山市', itemStyle: { areaColor: 'rgba(14, 37, 72, 0.94)' } },
+            { name: '台州市', itemStyle: { areaColor: 'rgba(10, 31, 63, 0.9)' } },
+            { name: '丽水市', itemStyle: { areaColor: 'rgba(12, 34, 67, 0.91)' } },
+          ],
           emphasis: { disabled: true },
-          label: { show: false },
+          label: {
+            show: true,
+            color: '#6a8eb5',
+            fontSize: 13,
+            fontWeight: 'bold',
+            textShadowColor: 'rgba(0,0,0,0.8)',
+            textShadowBlur: 4,
+          },
         },
         series: [
           ...lineSeries,
           highlightSeries,
-          { type: 'scatter', coordinateSystem: 'geo', data: cityData, symbolSize: 0,
-            label: { show: true, position: 'right', color: '#7a9ec4', fontSize: 14, fontWeight: 'bold',
-              formatter: '{b}', textShadowColor: 'rgba(0,0,0,0.7)', textShadowBlur: 4 },
-            zlevel: 10, silent: true },
           { type: 'effectScatter', coordinateSystem: 'geo', data: stationData,
             symbolSize: 5, showEffectOn: 'render',
             rippleEffect: { brushType: 'stroke', scale: 2, period: 3, color: '#ffffff' },
@@ -756,7 +744,7 @@
     chart.dispatchAction({ type: 'restore' });
     // 备用：显式重置 center + zoom
     chart.setOption({
-      geo: { center: [120.5, 29.1], zoom: 12 }
+      geo: { center: [120.5, 29.3], zoom: 1.25 }
     });
   });
 
