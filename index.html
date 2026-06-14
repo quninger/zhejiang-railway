@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>浙江省高铁路线 - 大屏展示</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  @keyframes titleGlow {
+    0%, 100% { text-shadow: 0 0 10px rgba(255,255,255,0.4), 0 0 20px rgba(74,144,226,0.4), 0 0 40px rgba(74,144,226,0.2); }
+    50% { text-shadow: 0 0 20px rgba(255,255,255,0.7), 0 0 40px rgba(74,144,226,0.7), 0 0 80px rgba(74,144,226,0.4); }
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+
+  @keyframes borderPulse {
+    0%, 100% { border-color: rgba(74,144,226,0.3); box-shadow: 0 0 10px rgba(74,144,226,0.1) inset; }
+    50% { border-color: rgba(74,144,226,0.8); box-shadow: 0 0 20px rgba(74,144,226,0.2) inset; }
+  }
+
+  @keyframes glowPulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+  }
+
+  body {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: radial-gradient(ellipse at center, #0a1628 0%, #060e1b 50%, #020810 100%);
+    font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .header {
+    position: relative;
+    width: 100%;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    z-index: 10;
+  }
+
+  .title-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 30px;
+  }
+
+  .title-line {
+    width: 200px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(74,144,226,0.8), transparent);
+    animation: borderPulse 2s ease-in-out infinite;
+  }
+
+  .title {
+    font-size: 42px;
+    font-weight: 700;
+    letter-spacing: 8px;
+    background: linear-gradient(180deg, #ffffff 0%, #a0c4e8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: titleGlow 3s ease-in-out infinite;
+    white-space: nowrap;
+  }
+
+  .particles {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100px;
+    pointer-events: none;
+  }
+
+  .particle {
+    position: absolute;
+    width: 4px; height: 4px;
+    background: rgba(74,144,226,0.6);
+    border-radius: 50%;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .map-container {
+    flex: 1;
+    width: 100%;
+    position: relative;
+    padding: 0 40px 20px 40px;
+  }
+
+  #mapChart {
+    width: 100%; height: 100%;
+  }
+
+  /* ---- 右下角图例 ---- */
+  .legend {
+    position: absolute;
+    bottom: 40px;
+    right: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 16px;
+    background: rgba(10,22,40,0.85);
+    border: 1px solid rgba(74,144,226,0.3);
+    border-radius: 8px;
+    z-index: 10;
+    backdrop-filter: blur(10px);
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #a0c4e8;
+  }
+
+  .legend-line {
+    width: 40px; height: 3px;
+    border-radius: 2px;
+  }
+
+  .legend-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    animation: float 1.5s ease-in-out infinite;
+  }
+
+  /* ---- 右上角数据卡片 ---- */
+  .info-cards {
+    position: absolute;
+    top: 20px; right: 60px;
+    display: flex; gap: 20px;
+    z-index: 10;
+  }
+
+  .info-card {
+    background: rgba(10,22,40,0.8);
+    border: 1px solid rgba(74,144,226,0.25);
+    border-radius: 6px;
+    padding: 12px 20px;
+    text-align: center;
+    backdrop-filter: blur(10px);
+  }
+
+  .info-card .value {
+    font-size: 28px;
+    font-weight: 700;
+    color: #4a90e2;
+    font-family: 'DIN', 'Consolas', monospace;
+  }
+
+  .info-card .label {
+    font-size: 12px;
+    color: #6b8db5;
+    margin-top: 4px;
+  }
+
+  /* ---- 左下角路线查询面板 ---- */
+  .route-panel {
+    position: absolute;
+    bottom: 40px;
+    left: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px 20px;
+    background: rgba(10,22,40,0.88);
+    border: 1px solid rgba(74,144,226,0.35);
+    border-radius: 10px;
+    z-index: 10;
+    backdrop-filter: blur(10px);
+    min-width: 260px;
+  }
+
+  .route-panel .panel-title {
+    font-size: 13px;
+    color: #6b8db5;
+    text-align: center;
+    letter-spacing: 2px;
+  }
+
+  .route-panel .row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .route-panel .row label {
+    font-size: 12px;
+    color: #a0c4e8;
+    white-space: nowrap;
+    min-width: 28px;
+  }
+
+  .route-panel select {
+    flex: 1;
+    padding: 6px 10px;
+    font-size: 13px;
+    background: rgba(20,40,70,0.9);
+    color: #d0e4f7;
+    border: 1px solid rgba(74,144,226,0.4);
+    border-radius: 5px;
+    outline: none;
+    cursor: pointer;
+    font-family: inherit;
+    max-width: 180px;
+  }
+
+  .route-panel select:focus {
+    border-color: #4a90e2;
+    box-shadow: 0 0 8px rgba(74,144,226,0.3);
+  }
+
+  .route-panel select option {
+    background: #0a1a30;
+    color: #d0e4f7;
+  }
+
+  .route-panel .btn-row {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+  }
+
+  .route-panel button {
+    padding: 7px 18px;
+    font-size: 13px;
+    font-family: inherit;
+    border-radius: 5px;
+    border: 1px solid rgba(74,144,226,0.4);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-search {
+    background: rgba(74,144,226,0.25);
+    color: #d0e4f7;
+  }
+
+  .btn-search:hover {
+    background: rgba(74,144,226,0.45);
+    border-color: #4a90e2;
+    box-shadow: 0 0 12px rgba(74,144,226,0.3);
+  }
+
+  .btn-reset {
+    background: rgba(255,255,255,0.08);
+    color: #8899aa;
+  }
+
+  .btn-reset:hover {
+    background: rgba(255,255,255,0.15);
+    border-color: rgba(255,255,255,0.3);
+  }
+
+  /* 路线结果提示 */
+  .path-info {
+    display: none;
+    position: absolute;
+    bottom: 130px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 10px 24px;
+    background: rgba(10,22,40,0.9);
+    border: 1px solid rgba(255,200,60,0.5);
+    border-radius: 8px;
+    z-index: 10;
+    color: #ffc830;
+    font-size: 14px;
+    white-space: nowrap;
+    animation: glowPulse 2s ease-in-out infinite;
+    backdrop-filter: blur(10px);
+  }
+
+  .path-info.show {
+    display: block;
+  }
+
+  /* tooltip */
+  .station-tooltip {
+    padding: 8px 14px !important;
+    background: rgba(10,22,40,0.92) !important;
+    border: 1px solid rgba(74,144,226,0.5) !important;
+    border-radius: 6px !important;
+    color: #fff !important;
+    font-size: 14px !important;
+    white-space: nowrap !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="particles" id="particles"></div>
+  <div class="title-wrapper">
+    <div class="title-line"></div>
+    <h1 class="title">浙 江 省 高 铁 路 线</h1>
+    <div class="title-line"></div>
+  </div>
+</div>
+
+<div class="map-container">
+  <div id="mapChart"></div>
+
+  <div class="info-cards">
+    <div class="info-card">
+      <div class="value" id="routeCount">9</div>
+      <div class="label">高铁路线</div>
+    </div>
+    <div class="info-card">
+      <div class="value" id="stationCount">0</div>
+      <div class="label">高铁站点</div>
+    </div>
+    <div class="info-card">
+      <div class="value" id="cityCount">11</div>
+      <div class="label">覆盖地市</div>
+    </div>
+  </div>
+
+  <!-- 路线查询面板 -->
+  <div class="route-panel" id="routePanel">
+    <div class="panel-title">🔍 两站之间路线查询</div>
+    <div class="row">
+      <label>起点</label>
+      <select id="selFrom"><option value="">-- 选择站点 --</option></select>
+    </div>
+    <div class="row">
+      <label>终点</label>
+      <select id="selTo"><option value="">-- 选择站点 --</option></select>
+    </div>
+    <div class="btn-row">
+      <button class="btn-search" id="btnSearch">查询路线</button>
+      <button class="btn-reset" id="btnReset">🔄 重置地图</button>
+    </div>
+  </div>
+
+  <!-- 路线结果提示条 -->
+  <div class="path-info" id="pathInfo"></div>
+
+  <div class="legend">
+    <div class="legend-item">
+      <div class="legend-line" style="background: #4a90e2;"></div>
+      <span>已开通</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-line" style="background: transparent; border: 1px dashed #e8a040; height: 0; width: 38px;"></div>
+      <span>建设中</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background: #fff; box-shadow: 0 0 10px #fff;"></div>
+      <span>主要站点</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-line" style="background: #ffc830; box-shadow: 0 0 8px rgba(255,200,48,0.6);"></div>
+      <span>查询结果</span>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<script>
+(function() {
+  // ============ 粒子效果 ============
+  const particlesContainer = document.getElementById('particles');
+  for (let i = 0; i < 20; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = Math.random() * 100 + '%';
+    p.style.top = Math.random() * 100 + '%';
+    p.style.animationDelay = Math.random() * 3 + 's';
+    p.style.animationDuration = (2 + Math.random() * 4) + 's';
+    particlesContainer.appendChild(p);
+  }
+
+  // ============ 站点数据 ============
+  const stations = {
+    '嘉善南': [121.00, 30.77],  '嘉兴南': [120.76, 30.75],
+    '桐乡':   [120.43, 30.50],  '杭州东': [120.21, 30.28],
+    '杭州南': [120.28, 30.15],  '杭州西': [120.00, 30.30],
+    '诸暨':   [120.25, 30.10],  '义乌':   [120.07, 29.53],
+    '金华':   [119.65, 29.08],  '龙游':   [119.18, 29.03],
+    '衢州':   [118.87, 28.97],  '江山':   [118.62, 28.74],
+    '绍兴北': [120.58, 30.03],  '余姚北': [120.98, 30.07],
+    '庄桥':   [121.30, 29.93],  '宁波':   [121.54, 29.86],
+    '奉化':   [121.41, 29.65],  '宁海':   [121.43, 29.37],
+    '三门县': [121.40, 29.18],  '临海':   [121.13, 28.85],
+    '台州':   [121.42, 28.65],  '温岭':   [121.17, 28.46],
+    '雁荡山': [121.02, 28.20],  '乐清':   [120.94, 28.12],
+    '温州南': [120.70, 28.00],  '富阳':   [119.96, 30.05],
+    '桐庐':   [119.69, 29.79],  '桐庐东': [119.65, 29.78],
+    '建德':   [119.37, 29.62],  '千岛湖': [119.04, 29.60],
+    '浦江':   [119.88, 29.45],  '横店':   [120.30, 29.15],
+    '磐安':   [120.45, 28.93],  '仙居':   [120.72, 28.60],
+    '楠溪江': [120.40, 28.15],  '湖州':   [120.09, 30.89],
+    '德清':   [120.00, 30.52],  '嵊州新昌':[120.83, 29.60],
+    '天台山': [121.03, 29.13],  '温岭西': [121.35, 28.37],
+    '玉环':   [121.34, 28.28],  '海盐西': [120.85, 30.67],
+    '慈溪':   [120.95, 30.50],  '武义北': [119.82, 28.88],
+    '永康南': [119.92, 28.80],  '缙云西': [120.07, 28.57],
+    '丽水':   [119.92, 28.45],  '青田':   [120.30, 28.13],
+  };
+
+  // ============ 高铁线路 ============
+  const routes = [
+    { name: '沪昆高铁',    stations: ['嘉善南','嘉兴南','桐乡','杭州东','诸暨','义乌','金华','龙游','衢州','江山'], status: 'open' },
+    { name: '杭甬高铁',    stations: ['杭州东','杭州南','绍兴北','余姚北','庄桥','宁波'], status: 'open' },
+    { name: '甬台温铁路',  stations: ['宁波','奉化','宁海','三门县','临海','台州','温岭','雁荡山','乐清','温州南'], status: 'open' },
+    { name: '杭黄高铁',    stations: ['杭州南','富阳','桐庐','建德','千岛湖'], status: 'open' },
+    { name: '杭温高铁',    stations: ['杭州西','桐庐东','浦江','义乌','横店','磐安','仙居','楠溪江','温州南'], status: 'building' },
+    { name: '商合杭高铁',  stations: ['湖州','德清','杭州西'], status: 'open' },
+    { name: '杭台高铁',    stations: ['杭州东','绍兴北','嵊州新昌','天台山','临海','台州','温岭西','玉环'], status: 'open' },
+    { name: '通苏嘉甬高铁',stations: ['嘉兴南','海盐西','慈溪','宁波'], status: 'building' },
+    { name: '金丽温高铁',  stations: ['金华','武义北','永康南','缙云西','丽水','青田','温州南'], status: 'open' },
+  ];
+
+  // ============ 地级市 ============
+  const cities = [
+    { name: '杭州市', coord: [120.15, 30.28] },
+    { name: '宁波市', coord: [121.54, 29.86] },
+    { name: '温州市', coord: [120.70, 28.00] },
+    { name: '嘉兴市', coord: [120.76, 30.77] },
+    { name: '湖州市', coord: [120.09, 30.89] },
+    { name: '绍兴市', coord: [120.58, 30.03] },
+    { name: '金华市', coord: [119.65, 29.08] },
+    { name: '衢州市', coord: [118.87, 28.97] },
+    { name: '舟山市', coord: [122.11, 30.02] },
+    { name: '台州市', coord: [121.42, 28.65] },
+    { name: '丽水市', coord: [119.92, 28.45] },
+  ];
+
+  // ============ 填充下拉框 ============
+  const stationNames = Object.keys(stations).sort();
+  const selFrom = document.getElementById('selFrom');
+  const selTo = document.getElementById('selTo');
+  stationNames.forEach(name => {
+    selFrom.add(new Option(name, name));
+    selTo.add(new Option(name, name));
+  });
+
+  // ============ 构建邻接图（用于路线查询） ============
+  // graph[stationA] = [{ neighbor: stationB, routeName: '...' }, ...]
+  const graph = {};
+  stationNames.forEach(s => { graph[s] = []; });
+  routes.forEach(route => {
+    for (let i = 0; i < route.stations.length - 1; i++) {
+      const a = route.stations[i], b = route.stations[i + 1];
+      graph[a].push({ neighbor: b, routeName: route.name });
+      graph[b].push({ neighbor: a, routeName: route.name });
+    }
+  });
+
+  // BFS 最短路径
+  function findPath(from, to) {
+    if (from === to) return { path: [from], segments: [] };
+    const visited = new Set([from]);
+    const queue = [[from]];
+    while (queue.length > 0) {
+      const path = queue.shift();
+      const current = path[path.length - 1];
+      for (const edge of graph[current]) {
+        if (edge.neighbor === to) {
+          const fullPath = [...path, to];
+          // 构建 segments（含路线名）
+          const segments = [];
+          for (let i = 0; i < fullPath.length - 1; i++) {
+            const a = fullPath[i], b = fullPath[i + 1];
+            const match = graph[a].find(e => e.neighbor === b);
+            segments.push({ from: a, to: b, route: match ? match.routeName : '?' });
+          }
+          return { path: fullPath, segments };
+        }
+        if (!visited.has(edge.neighbor)) {
+          visited.add(edge.neighbor);
+          queue.push([...path, edge.neighbor]);
+        }
+      }
+    }
+    return null; // 不可达
+  }
+
+  // ============ 加载地图 ============
+  let chart;
+
+  fetch('https://geo.datav.aliyun.com/areas_v3/bound/330000_full.json')
+    .then(res => res.json())
+    .then(zhejiangGeo => {
+      chart = echarts.init(document.getElementById('mapChart'));
+      echarts.registerMap('zhejiang', zhejiangGeo);
+
+      const colors = ['#4a90e2','#5b9ee8','#6dacee','#3d7ec5','#2b6cb0','#1a5a9e','#4a90e2','#e8a040','#5b9ee8'];
+
+      const lineSeries = routes.map((route, idx) => {
+        const coords = route.stations.map(s => stations[s]);
+        const segments = [];
+        for (let i = 0; i < coords.length - 1; i++) {
+          segments.push({ coords: [coords[i], coords[i + 1]] });
+        }
+        const isBuilding = route.status === 'building';
+        return {
+          name: route.name,
+          type: 'lines',
+          coordinateSystem: 'geo',
+          polyline: false,
+          data: segments,
+          lineStyle: {
+            color: isBuilding ? '#e8a040' : colors[idx % colors.length],
+            width: 2.5,
+            opacity: 0.9,
+            type: isBuilding ? 'dashed' : 'solid',
+            curveness: 0.1
+          },
+          effect: {
+            show: true,
+            period: 4 + idx * 0.3,
+            trailLength: 0.15,
+            symbol: 'circle',
+            symbolSize: 4,
+            color: '#ffffff',
+          },
+          zlevel: 1,
+        };
+      });
+
+      const stationData = Object.entries(stations).map(([name, coord]) => ({
+        name: name, value: coord,
+      }));
+      const cityData = cities.map(c => ({ name: c.name, value: c.coord }));
+
+      // 预留给路线查询的高亮 series（初始为空）
+      const highlightSeries = {
+        id: 'highlightRoute',
+        type: 'lines',
+        coordinateSystem: 'geo',
+        polyline: false,
+        data: [],
+        lineStyle: {
+          color: '#ffc830',
+          width: 4,
+          opacity: 1,
+          shadowBlur: 12,
+          shadowColor: 'rgba(255,200,48,0.7)',
+        },
+        effect: {
+          show: true,
+          period: 2,
+          trailLength: 0.25,
+          symbol: 'circle',
+          symbolSize: 6,
+          color: '#ffdd60',
+        },
+        zlevel: 5,
+      };
+
+      const option = {
+        backgroundColor: 'transparent',
+        tooltip: {
+          trigger: 'item',
+          formatter: function(params) {
+            if (params.seriesType === 'effectScatter' && params.name) {
+              return '<div class="station-tooltip">🚄 ' + params.name + '</div>';
+            }
+            if (params.seriesType === 'lines' && params.name) {
+              return '<div class="station-tooltip">' + params.name + '</div>';
+            }
+            return '';
+          },
+          backgroundColor: 'rgba(10,22,40,0.92)',
+          borderColor: 'rgba(74,144,226,0.5)',
+          borderWidth: 1,
+          textStyle: { color: '#fff', fontSize: 14 },
+          extraCssText: 'border-radius:6px;box-shadow:0 4px 20px rgba(0,0,0,0.5);',
+        },
+        geo: {
+          map: 'zhejiang',
+          roam: true,              // ← 鼠标滚轮缩放 + 拖拽，以鼠标为中心
+          zoom: 1.15,
+          center: [120.5, 29.3],
+          scaleLimit: { min: 0.6, max: 6 },
+          itemStyle: {
+            areaColor: {
+              type: 'linear', x: 0, y: 0, x2: 1, y2: 1,
+              colorStops: [
+                { offset: 0, color: 'rgba(10, 30, 60, 0.9)' },
+                { offset: 0.5, color: 'rgba(15, 40, 80, 0.85)' },
+                { offset: 1, color: 'rgba(8, 25, 50, 0.9)' }
+              ]
+            },
+            borderColor: 'rgba(74, 144, 226, 0.6)',
+            borderWidth: 1.5,
+            shadowColor: 'rgba(74, 144, 226, 0.3)',
+            shadowBlur: 20,
+            shadowOffsetY: 5,
+          },
+          emphasis: { disabled: true },
+          label: { show: false },
+        },
+        series: [
+          ...lineSeries,
+          highlightSeries,
+          { type: 'scatter', coordinateSystem: 'geo', data: cityData, symbolSize: 0,
+            label: { show: true, position: 'right', color: '#7a9ec4', fontSize: 14, fontWeight: 'bold',
+              formatter: '{b}', textShadowColor: 'rgba(0,0,0,0.7)', textShadowBlur: 4 },
+            zlevel: 10, silent: true },
+          { type: 'effectScatter', coordinateSystem: 'geo', data: stationData,
+            symbolSize: 8, showEffectOn: 'render',
+            rippleEffect: { brushType: 'stroke', scale: 3, period: 2.5, color: '#ffffff' },
+            itemStyle: { color: '#ffffff', shadowBlur: 15, shadowColor: 'rgba(255,255,255,0.8)' },
+            zlevel: 2 },
+          { type: 'scatter', coordinateSystem: 'geo', data: stationData,
+            symbolSize: 6,
+            itemStyle: { color: '#ffffff', shadowBlur: 8, shadowColor: 'rgba(255,255,255,0.6)' },
+            label: { show: false }, zlevel: 12, silent: true },
+        ]
+      };
+
+      chart.setOption(option);
+      window.addEventListener('resize', () => chart.resize());
+      document.getElementById('stationCount').textContent = Object.keys(stations).length;
+      console.log('✅ 浙江省高铁路线大屏已就绪 — ' + Object.keys(stations).length + ' 个站点, ' + routes.length + ' 条线路, ' + cities.length + ' 个地市');
+    })
+    .catch(err => {
+      console.error('加载浙江地图失败:', err);
+      document.getElementById('mapChart').innerHTML =
+        '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#e04040;font-size:18px;">' +
+        '⚠ 无法加载地图数据，请检查网络后刷新页面</div>';
+    });
+
+  // ============ 路线查询 ============
+  document.getElementById('btnSearch').addEventListener('click', () => {
+    const from = selFrom.value, to = selTo.value;
+    const pathInfo = document.getElementById('pathInfo');
+
+    if (!from || !to) {
+      pathInfo.className = 'path-info show';
+      pathInfo.textContent = '⚠ 请选择起点和终点';
+      pathInfo.style.color = '#ff8060';
+      pathInfo.style.borderColor = 'rgba(255,128,96,0.5)';
+      return;
+    }
+    if (from === to) {
+      pathInfo.className = 'path-info show';
+      pathInfo.textContent = '📍 ' + from + ' — 已在同一站';
+      pathInfo.style.color = '#7a9ec4';
+      pathInfo.style.borderColor = 'rgba(122,158,196,0.5)';
+      return;
+    }
+
+    const result = findPath(from, to);
+    if (!result) {
+      pathInfo.className = 'path-info show';
+      pathInfo.textContent = '❌ ' + from + ' → ' + to + ' 无法直达（无连通路线）';
+      pathInfo.style.color = '#ff8060';
+      pathInfo.style.borderColor = 'rgba(255,128,96,0.5)';
+      return;
+    }
+
+    // 构建高亮 segments
+    const segments = [];
+    for (let i = 0; i < result.path.length - 1; i++) {
+      const a = result.path[i], b = result.path[i + 1];
+      segments.push({ coords: [stations[a], stations[b]] });
+    }
+
+    // 汇总经过的路线名
+    const routeNames = [...new Set(result.segments.map(s => s.route))];
+
+    // 更新高亮 series
+    chart.setOption({
+      series: [{
+        id: 'highlightRoute',
+        data: segments,
+      }]
+    });
+
+    // 显示结果
+    pathInfo.className = 'path-info show';
+    pathInfo.textContent = '✅ ' + result.path.join(' → ') + '  |  途经: ' + routeNames.join('、');
+    pathInfo.style.color = '#ffc830';
+    pathInfo.style.borderColor = 'rgba(255,200,48,0.5)';
+
+    // 自动缩放以适配路线
+    const allCoords = result.path.map(s => stations[s]);
+    const lngs = allCoords.map(c => c[0]), lats = allCoords.map(c => c[1]);
+    const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
+    const minLat = Math.min(...lats), maxLat = Math.max(...lats);
+    const centerLng = (minLng + maxLng) / 2, centerLat = (minLat + maxLat) / 2;
+    const rangeLng = maxLng - minLng, rangeLat = maxLat - minLat;
+    const range = Math.max(rangeLng, rangeLat, 0.5);
+    const zoom = Math.min(4, 2.5 / range);
+
+    chart.setOption({
+      geo: { center: [centerLng, centerLat], zoom: zoom }
+    });
+  });
+
+  // ============ 一键重置 ============
+  document.getElementById('btnReset').addEventListener('click', () => {
+    // 清除下拉框
+    selFrom.value = '';
+    selTo.value = '';
+
+    // 清除路线高亮
+    chart.setOption({
+      series: [{ id: 'highlightRoute', data: [] }]
+    });
+
+    // 隐藏结果提示
+    const pathInfo = document.getElementById('pathInfo');
+    pathInfo.className = 'path-info';
+    pathInfo.textContent = '';
+
+    // 恢复默认视角
+    chart.dispatchAction({ type: 'restore' });
+    // 备用：显式重置 center + zoom
+    chart.setOption({
+      geo: { center: [120.5, 29.3], zoom: 1.15 }
+    });
+  });
+
+})();
+</script>
+</body>
+</html>
