@@ -520,18 +520,18 @@
           data: segments,
           lineStyle: {
             color: isBuilding ? '#e8a040' : colors[idx % colors.length],
-            width: 2.5,
-            opacity: 0.9,
+            width: 1.2,
+            opacity: 0.45,
             type: isBuilding ? 'dashed' : 'solid',
             curveness: 0.1
           },
-          effect: {
-            show: true,
-            period: 4 + idx * 0.3,
-            trailLength: 0.15,
-            symbol: 'circle',
-            symbolSize: 4,
-            color: '#ffffff',
+          emphasis: {
+            lineStyle: {
+              width: 3,
+              opacity: 1,
+              shadowBlur: 8,
+              shadowColor: 'rgba(74,144,226,0.5)',
+            }
           },
           zlevel: 1,
         };
@@ -589,8 +589,8 @@
         geo: {
           map: 'china',
           roam: true,
-          zoom: 3.8,
-          center: [120.3, 29.3],
+          zoom: 6.5,
+          center: [120.5, 29.1],
           scaleLimit: { min: 0.5, max: 10 },
           // 全国省份统一暗色，浙江高亮
           itemStyle: {
@@ -637,13 +637,21 @@
               formatter: '{b}', textShadowColor: 'rgba(0,0,0,0.7)', textShadowBlur: 4 },
             zlevel: 10, silent: true },
           { type: 'effectScatter', coordinateSystem: 'geo', data: stationData,
-            symbolSize: 8, showEffectOn: 'render',
-            rippleEffect: { brushType: 'stroke', scale: 3, period: 2.5, color: '#ffffff' },
-            itemStyle: { color: '#ffffff', shadowBlur: 15, shadowColor: 'rgba(255,255,255,0.8)' },
+            symbolSize: 5, showEffectOn: 'render',
+            rippleEffect: { brushType: 'stroke', scale: 2, period: 3, color: '#ffffff' },
+            itemStyle: { color: 'rgba(255,255,255,0.6)', shadowBlur: 5, shadowColor: 'rgba(255,255,255,0.3)' },
+            emphasis: {
+              scale: 2,
+              itemStyle: { color: '#ffffff', shadowBlur: 15, shadowColor: 'rgba(255,255,255,0.9)' }
+            },
             zlevel: 2 },
           { type: 'scatter', coordinateSystem: 'geo', data: stationData,
-            symbolSize: 6,
-            itemStyle: { color: '#ffffff', shadowBlur: 8, shadowColor: 'rgba(255,255,255,0.6)' },
+            symbolSize: 3,
+            itemStyle: { color: 'rgba(255,255,255,0.5)', shadowBlur: 3, shadowColor: 'rgba(255,255,255,0.2)' },
+            emphasis: {
+              scale: 2.5,
+              itemStyle: { color: '#ffffff', shadowBlur: 10, shadowColor: 'rgba(255,255,255,0.8)' }
+            },
             label: { show: false }, zlevel: 12, silent: true },
         ]
       };
@@ -748,7 +756,7 @@
     chart.dispatchAction({ type: 'restore' });
     // 备用：显式重置 center + zoom
     chart.setOption({
-      geo: { center: [120.3, 29.3], zoom: 3.8 }
+      geo: { center: [120.5, 29.1], zoom: 6.5 }
     });
   });
 
