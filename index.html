@@ -128,14 +128,23 @@
   .btn-reset { background:rgba(255,255,255,0.08);color:#8899aa; }
   .btn-reset:hover { background:rgba(255,255,255,0.15);border-color:rgba(255,255,255,0.3); }
 
-  /* 路线结果提示 */
+  /* 路线结果悬窗 */
   .path-info {
-    display:none;position:absolute;bottom:100px;left:50%;transform:translateX(-50%);
-    padding:5px 14px;background:rgba(10,22,40,0.9);border:1px solid rgba(255,255,255,0.4);
-    border-radius:6px;z-index:10;color:#fff;font-size:12px;white-space:nowrap;
+    display:none;position:absolute;top:520px;right:60px;width:175px;max-height:220px;
+    padding:10px 12px;background:rgba(10,22,40,0.92);border:1px solid rgba(255,255,255,0.4);
+    border-radius:8px;z-index:10;color:#fff;font-size:11px;
     animation:glowPulse 2s ease-in-out infinite;backdrop-filter:blur(10px);
+    overflow-y:auto;flex-direction:column;gap:3px;
   }
-  .path-info.show { display:block; }
+  .path-info::-webkit-scrollbar { width:4px; }
+  .path-info::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.2);border-radius:2px; }
+  .path-info.show { display:flex; }
+  .path-info .pi-title { font-size:11px;color:#fff;text-align:center;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.15);margin-bottom:2px; }
+  .path-info .pi-station { padding:2px 6px;color:#a0c4e8;border-radius:3px; }
+  .path-info .pi-station.start { color:#fff;font-weight:bold; }
+  .path-info .pi-station.end { color:#fff;font-weight:bold; }
+  .path-info .pi-arrow { text-align:center;color:rgba(255,255,255,0.3);font-size:10px;line-height:1; }
+  .path-info .pi-route { font-size:10px;color:#6b8db5;text-align:center;padding:2px 0; }
   .station-tooltip {
     padding:8px 14px!important;background:rgba(10,22,40,0.92)!important;
     border:1px solid rgba(74,144,226,0.5)!important;border-radius:6px!important;
@@ -356,18 +365,38 @@
   // 路线查询
   document.getElementById('btnSearch').addEventListener('click',()=>{
     const from=sf.value,to=st.value,pi=document.getElementById('pathInfo');
-    if(!from||!to){pi.className='path-info show';pi.textContent='⚠ 请选择起点和终点';return;}
-    if(from===to){pi.className='path-info show';pi.textContent='📍 '+from+' — 已在同一站';return;}
+    if(!from||!to){showPathError('⚠ 请选择起点和终点');return;}
+    if(from===to){showPathError('📍 '+from+' — 已在同一站');return;}
     const result=findPath(from,to);
-    if(!result){pi.className='path-info show';pi.textContent='❌ '+from+' → '+to+' 无法直达';return;}
+    if(!result){showPathError('❌ '+from+' → '+to+' 无法直达');return;}
+
+    // 构建高亮
     const segs=[];for(let i=0;i<result.path.length-1;i++){const a=result.path[i],b=result.path[i+1];segs.push({coords:[stations[a],stations[b]]});}
-    const rn=[...new Set(result.segments.map(s=>s.route))];
     chart.setOption({series:[{id:'highlightRoute',data:segs}]});
-    pi.className='path-info show';pi.textContent='✅ '+result.path.join(' → ')+'  |  途经: '+rn.join('、');
+
+    // 填充悬窗内容（可滚动）
+    const rn=[...new Set(result.segments.map(s=>s.route))];
+    let html='<div class="pi-title">'+from+' → '+to+'</div>';
+    html+='<div class="pi-route">途经: '+rn.join('、')+'</div>';
+    result.path.forEach((s,i)=>{
+      const cls=i===0?'start':(i===result.path.length-1?'end':'');
+      html+='<div class="pi-station '+cls+'">'+s+'</div>';
+      if(i<result.path.length-1)html+='<div class="pi-arrow">↓</div>';
+    });
+    pi.innerHTML=html;
+    pi.className='path-info show';
+
+    // 缩放
     const ac=result.path.map(s=>stations[s]),lngs=ac.map(c=>c[0]),lats=ac.map(c=>c[1]);
     const range=Math.max(Math.max(...lngs)-Math.min(...lngs),Math.max(...lats)-Math.min(...lats),0.5);
     chart.setOption({geo:{center:[(Math.min(...lngs)+Math.max(...lngs))/2,(Math.min(...lats)+Math.max(...lats))/2],zoom:Math.min(4,2.5/range)}});
   });
+
+  function showPathError(msg){
+    const pi=document.getElementById('pathInfo');
+    pi.innerHTML='<div class="pi-title" style="color:#ff8060">'+msg+'</div>';
+    pi.className='path-info show';
+  }
 
   // 重置
   document.getElementById('btnReset').addEventListener('click',()=>{
