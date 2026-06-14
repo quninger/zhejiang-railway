@@ -589,9 +589,9 @@
         geo: {
           map: 'china',
           roam: true,
-          zoom: 6.5,
+          zoom: 12,
           center: [120.5, 29.1],
-          scaleLimit: { min: 0.5, max: 10 },
+          scaleLimit: { min: 0.5, max: 20 },
           // 全国省份统一暗色，浙江高亮
           itemStyle: {
             areaColor: 'rgba(8, 18, 36, 0.85)',
@@ -756,7 +756,7 @@
     chart.dispatchAction({ type: 'restore' });
     // 备用：显式重置 center + zoom
     chart.setOption({
-      geo: { center: [120.5, 29.1], zoom: 6.5 }
+      geo: { center: [120.5, 29.1], zoom: 12 }
     });
   });
 
