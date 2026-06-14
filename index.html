@@ -167,55 +167,55 @@
     margin-top: 4px;
   }
 
-  /* ---- 左下角路线查询面板 ---- */
+  /* ---- 左下角路线查询面板（缩小版） ---- */
   .route-panel {
     position: absolute;
-    bottom: 40px;
-    left: 40px;
+    bottom: 30px;
+    left: 30px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    padding: 16px 20px;
+    gap: 5px;
+    padding: 10px 14px;
     background: rgba(10,22,40,0.88);
     border: 1px solid rgba(74,144,226,0.35);
-    border-radius: 10px;
+    border-radius: 8px;
     z-index: 10;
     backdrop-filter: blur(10px);
-    min-width: 260px;
+    min-width: 210px;
   }
 
   .route-panel .panel-title {
-    font-size: 13px;
+    font-size: 11px;
     color: #6b8db5;
     text-align: center;
-    letter-spacing: 2px;
+    letter-spacing: 1px;
   }
 
   .route-panel .row {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
   }
 
   .route-panel .row label {
-    font-size: 12px;
+    font-size: 11px;
     color: #a0c4e8;
     white-space: nowrap;
-    min-width: 28px;
+    min-width: 24px;
   }
 
   .route-panel select {
     flex: 1;
-    padding: 6px 10px;
-    font-size: 13px;
+    padding: 4px 8px;
+    font-size: 11px;
     background: rgba(20,40,70,0.9);
     color: #d0e4f7;
     border: 1px solid rgba(74,144,226,0.4);
-    border-radius: 5px;
+    border-radius: 4px;
     outline: none;
     cursor: pointer;
     font-family: inherit;
-    max-width: 180px;
+    max-width: 140px;
   }
 
   .route-panel select:focus {
@@ -230,15 +230,15 @@
 
   .route-panel .btn-row {
     display: flex;
-    gap: 8px;
+    gap: 5px;
     justify-content: center;
   }
 
   .route-panel button {
-    padding: 7px 18px;
-    font-size: 13px;
+    padding: 4px 10px;
+    font-size: 11px;
     font-family: inherit;
-    border-radius: 5px;
+    border-radius: 4px;
     border: 1px solid rgba(74,144,226,0.4);
     cursor: pointer;
     transition: all 0.2s;
@@ -265,20 +265,20 @@
     border-color: rgba(255,255,255,0.3);
   }
 
-  /* 路线结果提示 */
+  /* 路线结果提示（缩小版） */
   .path-info {
     display: none;
     position: absolute;
-    bottom: 130px;
+    bottom: 100px;
     left: 50%;
     transform: translateX(-50%);
-    padding: 10px 24px;
+    padding: 5px 14px;
     background: rgba(10,22,40,0.9);
     border: 1px solid rgba(255,200,60,0.5);
-    border-radius: 8px;
+    border-radius: 6px;
     z-index: 10;
     color: #ffc830;
-    font-size: 14px;
+    font-size: 12px;
     white-space: nowrap;
     animation: glowPulse 2s ease-in-out infinite;
     backdrop-filter: blur(10px);
@@ -589,8 +589,8 @@
         geo: {
           map: 'china',
           roam: true,
-          zoom: 1.1,
-          center: [113, 33],
+          zoom: 3.8,
+          center: [120.3, 29.3],
           scaleLimit: { min: 0.5, max: 10 },
           // 全国省份统一暗色，浙江高亮
           itemStyle: {
@@ -748,7 +748,7 @@
     chart.dispatchAction({ type: 'restore' });
     // 备用：显式重置 center + zoom
     chart.setOption({
-      geo: { center: [113, 33], zoom: 1.1 }
+      geo: { center: [120.3, 29.3], zoom: 3.8 }
     });
   });
 
