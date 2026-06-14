@@ -67,41 +67,6 @@
   .info-card .value { font-size:28px;font-weight:700;color:#4a90e2;font-family:'DIN','Consolas',monospace; }
   .info-card .label { font-size:12px;color:#6b8db5;margin-top:4px; }
 
-  /* ---- 右侧路线列表悬窗 ---- */
-  .route-list {
-    position:absolute;top:130px;right:60px;width:175px;max-height:380px;
-    display:flex;flex-direction:column;gap:2px;
-    padding:10px 12px;background:rgba(10,22,40,0.88);
-    border:1px solid rgba(74,144,226,0.3);border-radius:8px;
-    z-index:10;backdrop-filter:blur(10px);overflow-y:auto;
-  }
-  .route-list::-webkit-scrollbar { width:4px; }
-  .route-list::-webkit-scrollbar-thumb { background:rgba(74,144,226,0.3);border-radius:2px; }
-  .route-list .list-title {
-    font-size:11px;color:#6b8db5;text-align:center;padding-bottom:6px;
-    border-bottom:1px solid rgba(74,144,226,0.15);margin-bottom:4px;letter-spacing:1px;
-  }
-  .route-item {
-    display:flex;align-items:center;gap:8px;padding:5px 8px;
-    border-radius:4px;cursor:pointer;transition:all 0.15s;
-    font-size:11px;color:#a0c4e8;
-  }
-  .route-item:hover { background:rgba(74,144,226,0.15); }
-  .route-item.active { background:rgba(74,144,226,0.2);color:#fff; }
-  .route-item .dot {
-    width:12px;height:3px;border-radius:2px;flex-shrink:0;
-  }
-  .route-item .tag {
-    margin-left:auto;font-size:9px;padding:1px 5px;border-radius:3px;
-    background:rgba(74,144,226,0.15);color:#6b8db5;
-  }
-  .route-item .tag.building { background:rgba(232,160,64,0.2);color:#e8a040; }
-  .route-list .btn-all {
-    text-align:center;font-size:10px;color:#6b8db5;padding:4px 0;
-    cursor:pointer;border-radius:4px;margin-top:2px;
-  }
-  .route-list .btn-all:hover { color:#a0c4e8;background:rgba(74,144,226,0.1); }
-
   /* ---- 左下角路线查询面板 ---- */
   .route-panel {
     position:absolute;bottom:30px;left:30px;display:flex;flex-direction:column;gap:5px;
@@ -168,12 +133,6 @@
     <div class="info-card"><div class="value" id="routeCount">9</div><div class="label">高铁路线</div></div>
     <div class="info-card"><div class="value" id="stationCount">0</div><div class="label">高铁站点</div></div>
     <div class="info-card"><div class="value" id="cityCount">11</div><div class="label">覆盖地市</div></div>
-  </div>
-
-  <!-- 右侧路线列表悬窗 -->
-  <div class="route-list" id="routeList">
-    <div class="list-title">🚄 路线列表</div>
-    <div class="btn-all" id="btnAllRoutes">■ 全部显示</div>
   </div>
 
   <!-- 路线查询面板 -->
@@ -258,47 +217,7 @@
     return null;
   }
 
-  // ============ 构建路线列表悬窗 ============
-  const routeList=document.getElementById('routeList');
-  routes.forEach((r,i)=>{
-    const div=document.createElement('div');
-    div.className='route-item';
-    div.dataset.idx=i;
-    const isB=r.status==='building';
-    div.innerHTML='<span class="dot" style="background:'+(isB?'#e8a040':colors[i%colors.length])+'"></span>'+
-      r.name+(isB?'<span class="tag building">在建</span>':'<span class="tag">开通</span>');
-    routeList.appendChild(div);
-  });
-
-  let activeIdx=-1;
   let chart;
-
-  function highlightRoute(idx){
-    // dim all, brighten selected
-    const updates=[];
-    routes.forEach((r,i)=>{
-      const sid='route_'+i;
-      updates.push({id:sid,lineStyle:{opacity:i===idx?1:0.08,width:i===idx?2.5:0.8}});
-    });
-    if(chart)chart.setOption({series:updates});
-
-    // toggle active class
-    document.querySelectorAll('.route-item').forEach(el=>el.classList.remove('active'));
-    if(idx>=0)document.querySelector('.route-item[data-idx="'+idx+'"]').classList.add('active');
-    activeIdx=idx;
-  }
-
-  routeList.addEventListener('click',e=>{
-    const item=e.target.closest('.route-item');
-    if(!item)return;
-    const idx=parseInt(item.dataset.idx);
-    if(activeIdx===idx){highlightRoute(-1);} // 取消
-    else{highlightRoute(idx);}
-  });
-
-  document.getElementById('btnAllRoutes').addEventListener('click',()=>highlightRoute(-1));
-
-  // ============ 加载地图 ============
   Promise.all([
     fetch('data/china.json').then(r=>r.json()),
     fetch('data/zhejiang.json').then(r=>r.json())
@@ -403,7 +322,6 @@
     sf.value='';st.value='';
     chart.setOption({series:[{id:'highlightRoute',data:[]}]});
     document.getElementById('pathInfo').className='path-info';
-    highlightRoute(-1);
     chart.dispatchAction({type:'restore'});
     chart.setOption({geo:{center:[120.5,29.3],zoom:1.25}});
   });
